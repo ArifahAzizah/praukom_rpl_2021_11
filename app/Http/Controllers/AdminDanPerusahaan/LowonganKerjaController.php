@@ -14,13 +14,15 @@ use Illuminate\Http\{JsonResponse, RedirectResponse, Request};
 use Illuminate\Support\Facades\{Auth, Gate};
 use Illuminate\Support\ItemNotFoundException;
 
-final class LowonganKerjaController extends Controller {
+final class LowonganKerjaController extends Controller
+{
     use HasMainRoute;
 
     /**
      * Melakukan set untuk route utama dari controller ini
      */
-    public function __construct() {
+    public function __construct()
+    {
         $this->setMainRoute('lowongankerja.index');
     }
 
@@ -30,7 +32,8 @@ final class LowonganKerjaController extends Controller {
      * @param MitraPerusahaan $mitra
      * @return JsonResponse
      */
-    public function getKantorJSONFormat(MitraPerusahaan $mitra): JsonResponse {
+    public function getKantorJSONFormat(MitraPerusahaan $mitra): JsonResponse
+    {
         return new JsonResponse($mitra->kantor);
     }
 
@@ -39,7 +42,8 @@ final class LowonganKerjaController extends Controller {
      *
      * @return View
      */
-    public function getAllJobVacanciesData(Request $request): View {
+    public function getAllJobVacanciesData(Request $request): View
+    {
         $lowongan = null;
         $lowonganNeedApprove = null;
         $pendaftaranLowongan = null;
@@ -96,7 +100,8 @@ final class LowonganKerjaController extends Controller {
      *
      * @return View
      */
-    public function createOneJobVacancyData(): View {
+    public function createOneJobVacancyData(): View
+    {
         $perusahaan = null;
         $jenisPekerjaan = JenisPekerjaan::all();
 
@@ -111,7 +116,8 @@ final class LowonganKerjaController extends Controller {
      * @param StoreLowonganKerjaRequest $request
      * @return RedirectResponse
      */
-    public function storeOneJobVacancyData(StoreLowonganKerjaRequest $request): RedirectResponse {
+    public function storeOneJobVacancyData(StoreLowonganKerjaRequest $request): RedirectResponse
+    {
         try {
             $validatedData = $request->validatedData();
             $validatedData['slug'] = Helper::generateUniqueSlug($validatedData['judul_lowongan']);
@@ -144,7 +150,8 @@ final class LowonganKerjaController extends Controller {
      *
      * @return View
      */
-    public function jobVacanciesThatRequireApproval(): View {
+    public function jobVacanciesThatRequireApproval(): View
+    {
         $lowongan = LowonganKerja::with(['perusahaan'])
             ->needApproved()
             ->hasTahapan()
@@ -160,7 +167,8 @@ final class LowonganKerjaController extends Controller {
      * @param LowonganKerja $lowonganKerja
      * @return RedirectResponse
      */
-    public function approveJobVacancies(LowonganKerja $lowonganKerja): RedirectResponse {
+    public function approveJobVacancies(LowonganKerja $lowonganKerja): RedirectResponse
+    {
         $lowonganKerja->update([
             'is_approve' => true,
             'active' => true
@@ -177,7 +185,8 @@ final class LowonganKerjaController extends Controller {
      * @param LowonganKerja $lowonganKerja
      * @return RedirectResponse
      */
-    public function rejectJobVacancies(LowonganKerja $lowonganKerja): RedirectResponse {
+    public function rejectJobVacancies(LowonganKerja $lowonganKerja): RedirectResponse
+    {
         $lowonganKerja->update([
             'is_approve' => false,
             'active' => false
@@ -194,7 +203,8 @@ final class LowonganKerjaController extends Controller {
      * @param LowonganKerja $lowonganKerja
      * @return View|RedirectResponse
      */
-    public function getDetailOneJobVacancyData(LowonganKerja $lowonganKerja): View|RedirectResponse {
+    public function getDetailOneJobVacancyData(LowonganKerja $lowonganKerja): View|RedirectResponse
+    {
         return view('lowongankerja.detail', compact('lowonganKerja'));
     }
 
@@ -204,7 +214,8 @@ final class LowonganKerjaController extends Controller {
      * @param LowonganKerja $lowonganKerja
      * @return View
      */
-    public function seeApplicants(LowonganKerja $lowonganKerja): View {
+    public function seeApplicants(LowonganKerja $lowonganKerja): View
+    {
         $pendaftaranLowongan = $lowonganKerja
             ->pendaftaran_lowongan()
             ->hasVerified()
@@ -219,7 +230,8 @@ final class LowonganKerjaController extends Controller {
      * @param LowonganKerja $lowonganKerja
      * @return View
      */
-    public function seeStages(LowonganKerja $lowonganKerja): View {
+    public function seeStages(LowonganKerja $lowonganKerja): View
+    {
         return view('lowongankerja.see-stages', compact('lowonganKerja'));
     }
 
@@ -230,20 +242,21 @@ final class LowonganKerjaController extends Controller {
      * @param TahapanSeleksi $tahapanSeleksi
      * @return View
      */
-    public function applicantSelection(LowonganKerja $lowonganKerja, TahapanSeleksi $tahapanSeleksi): View {
+    public function applicantSelection(LowonganKerja $lowonganKerja, TahapanSeleksi $tahapanSeleksi): View
+    {
         $pendaftaranLowongan = [];
 
         $prevTahapan = TahapanSeleksi::where('id_lowongan', $lowonganKerja->id_lowongan)
             ->prevTahapan($tahapanSeleksi)
             ->first()
-            ->status;
+            ?->status;
 
         if ($tahapanSeleksi->urutan_tahapan_ke === 1) {
             $pendaftaranLowongan = $lowonganKerja
                 ->pendaftaran_lowongan()
                 ->hasVerified()
                 ->paginate(10);
-        } else if ($prevTahapan !== 'Selesai') {
+        } else if (!is_null($prevTahapan) && $prevTahapan !== 'Selesai') {
             $pendaftaranLowongan = [];
         } else {
             $pendaftaranLowongan = $lowonganKerja
@@ -299,7 +312,8 @@ final class LowonganKerjaController extends Controller {
      * @param LowonganKerja $lowonganKerja
      * @return View|RedirectResponse
      */
-    public function editOneJobVacancyData(LowonganKerja $lowonganKerja): View|RedirectResponse {
+    public function editOneJobVacancyData(LowonganKerja $lowonganKerja): View|RedirectResponse
+    {
         try {
             $lowongan = null;
             $perusahaan = null;
@@ -363,7 +377,8 @@ final class LowonganKerjaController extends Controller {
      * @param LowonganKerja $lowonganKerja
      * @return RedirectResponse
      */
-    public function deactiveOneJobVacancy(LowonganKerja $lowonganKerja): RedirectResponse {
+    public function deactiveOneJobVacancy(LowonganKerja $lowonganKerja): RedirectResponse
+    {
         try {
             $lowonganKerja->update(['active' => false]);
             notify()->success('Berhasil menonaktifkan lowongan', 'Notifikasi');
